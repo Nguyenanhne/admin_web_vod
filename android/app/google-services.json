@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "700180130860",
+    "firebase_url": "https://finalmobilecrossplatform-default-rtdb.firebaseio.com",
+    "project_id": "finalmobilecrossplatform",
+    "storage_bucket": "finalmobilecrossplatform.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:700180130860:android:ff5f7daeac0ec727b0f589",
+        "android_client_info": {
+          "package_name": "com.example.admin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDuf5jRtDOIIVwReVbGnoKUEycS1eyKMjo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:700180130860:android:89c11506ec5e0126b0f589",
+        "android_client_info": {
+          "package_name": "com.example.du_an_cntt"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDuf5jRtDOIIVwReVbGnoKUEycS1eyKMjo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
