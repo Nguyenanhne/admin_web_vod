@@ -15,5 +15,14 @@ class TypeService {
       return [];
     }
   }
-
+  Future<bool> addType(String typeName) async {
+    try {
+      await firestore.collection('Type').add({'typeName': typeName});
+      print('Add type successfully: $typeName');
+      return true;
+    } catch (e) {
+      print('Error adding type: $e');
+      return false;
+    }
+  }
 }

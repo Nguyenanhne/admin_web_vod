@@ -1,19 +1,19 @@
-import 'package:admin/viewmodel/login_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../viewmodel/sign_in_viewmodel.dart';
 
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class SignInPage extends StatefulWidget {
+  const SignInPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<SignInPage> createState() => _SignInPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _SignInPageState extends State<SignInPage> {
   @override
   Widget build(BuildContext context) {
-    final viewModel = Provider.of<LoginViewModel>(context);
+    final viewModel = Provider.of<SignInViewModel>(context);
     return Scaffold(
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -39,7 +39,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
-          Consumer<LoginViewModel>(
+          Consumer<SignInViewModel>(
             builder: (context, loginVM, child) {
               return TextButton(
                 onPressed: (){

@@ -1,16 +1,22 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:html' as html;
+import 'dart:typed_data';
 import 'package:admin/routes/routes_name.dart';
 import 'package:admin/service/film_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:multi_dropdown/multi_dropdown.dart';
 import '../model/film_model.dart';
-import 'dart:io' as io;
+import 'package:http/http.dart' as http;
 
+import '../service/auth_service.dart';
 import '../service/type_service.dart';
 import '../service/video_service.dart';
+import '../utils/utils.dart';
 
 class DetailedFilmViewModel extends ChangeNotifier{
 
@@ -134,6 +140,34 @@ class DetailedFilmViewModel extends ChangeNotifier{
       return;
     }
 
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    final verifyToken = await Auth().sendTokenToServer();
+
+    context.pop();
+
+
+    if(!verifyToken){
+      showDialog(context: context, builder: (context){
+        return AlertDialog(
+          title: Text("Lỗi xác thực", style: dialogTitleStyle.copyWith(color: Colors.red),),
+          content: Text("Token không hợp lệ!", style: dialogContentStyle,),
+          actions: [
+            TextButton(onPressed: () {
+              context.pop();
+            },
+            child: Text("Xác nhận", style: dialogContentStyle))
+          ],
+        );
+      });
+      return;
+    }
+
     _isSaving = true;
     _isEdited = false;
 
@@ -226,6 +260,46 @@ class DetailedFilmViewModel extends ChangeNotifier{
     }
   }
 
+  Future<bool> deleteTrailer() async{
+    try {
+      final response = await http.post(
+        Uri.parse(DELETE_VIDEO),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"folderPath": "trailer/${_film!.id}"}),
+      );
+      if (response.statusCode == 200) {
+        print("✅  Xóa trailer ${_film!.id} lên thành công!");
+        return true;
+      } else {
+        print ("❌ Lỗi xóa: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print ("❌ Lỗi xóa: ");
+      return false;
+    }
+  }
+
+  Future<bool> deleteVideo() async{
+    try {
+      final response = await http.post(
+        Uri.parse(DELETE_VIDEO),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"folderPath": "video/${_film!.id}"}),
+      );
+      if (response.statusCode == 200) {
+        print("✅  Xóa Video ${_film!.id} lên thành công!");
+        return true;
+      } else {
+        print ("❌ Lỗi xóa: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print ("❌ Lỗi xóa: ");
+      return false;
+    }
+  }
+
   Future<bool> deleteFilm() async{
     if(_film != null){
       return _filmService.deleteFilm(_film!.id);
@@ -240,12 +314,327 @@ class DetailedFilmViewModel extends ChangeNotifier{
     return false;
   }
 
-  void deleteOnTap(BuildContext context){
+  Future<bool> uploadTrailer() async{
+    try {
+      final response = await http.post(
+        Uri.parse(UPLOAD_TRAILER_TO_R2),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"id": _film!.id}),
+      );
+      if (response.statusCode == 200) {
+        print("✅ Tải trailer lên thành công!");
+        return true;
+      } else {
+        print ("❌ Lỗi tải lên: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print ("❌ Lỗi tải lên: ");
+      return false;
+    }
+  }
+
+  Future<bool> uploadVideo() async{
+    try {
+      final response = await http.post(
+        Uri.parse(UPLOAD_VIDEO_TO_R2),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"id": _film!.id}),
+      );
+      if (response.statusCode == 200) {
+        print("✅ Tải video lên thành công!");
+        return true;
+      } else {
+        print ("❌ Lỗi tải lên: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print ("❌ Lỗi tải lên: ");
+      return false;
+    }
+  }
+
+  Future<bool> checkTrailer() async{
+    try {
+      final response = await http.post(
+        Uri.parse(CHECK_TRAILER),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"id": _film!.id}),
+      );
+      if (response.statusCode == 200) {
+        print("✅ Sãn sàng tải lên");
+        return true;
+      } else {
+        print ("❌ Lỗi tải lên: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print ("❌ Lỗi tải lên: ");
+      return false;
+    }
+  }
+
+  Future<bool> checkVideo() async{
+    try {
+      final response = await http.post(
+        Uri.parse(CHECK_VIDEO),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"id": _film!.id}),
+      );
+      if (response.statusCode == 200) {
+        print("✅ Sãn sàng tải lên");
+        return true;
+      } else {
+        print ("❌ Lỗi tải lên: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print ("❌ Lỗi tải lên: ");
+      return false;
+    }
+  }
+
+  Future<void> uploadTrailerOnTap(BuildContext context) async{
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+    final verifyToken = await Auth().sendTokenToServer();
+
+    context.pop();
+
+    if(!verifyToken){
+      showDialog(context: context, builder: (context){
+        return AlertDialog(
+          title: Text("Lỗi xác thực", style: dialogTitleStyle.copyWith(color: Colors.red),),
+          content: Text("Token không hợp lệ!", style: dialogContentStyle,),
+          actions: [
+            TextButton(onPressed: () {
+              context.pop();
+            },
+                child: Text("Xác nhận", style: dialogContentStyle))
+          ],
+        );
+      });
+      return;
+    }
+
+    _isSaving = true;
+    _isEdited = false;
+
+    notifyListeners();
+
+    bool isTrailerUpdated = false;
+    bool isAlready = false;
+
+    if (_film != null) {
+      isAlready = await checkTrailer();
+    }
+    if (isAlready){
+      isTrailerUpdated = await uploadTrailer();
+      if (isTrailerUpdated) {
+        print("Upload trailer thành công!");
+        _isEdited = false; // Hoàn tất chỉnh sửa nếu có ít nhất 1 thành công
+        showDialog(context: context, builder: (context){
+          return AlertDialog(
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Icon(Icons.info, color: Colors.green),
+                Text("Thành công", style: dialogTitleStyle.copyWith(color: Colors.green),),
+              ],
+            ),
+            content: Text("Cập nhật thành công!", style: dialogContentStyle,),
+            actions: [
+              TextButton(onPressed: (){
+                Navigator.pop(context);
+              }, child: Text("Xác nhận", style: dialogContentStyle))
+            ],
+          );
+        });
+      } else {
+        print("Upload trailer không thành công!");
+        _isEdited = true; // Giữ chế độ chỉnh sửa nếu không có cập nhật nào thành công
+        showDialog(context: context, builder: (context){
+          return AlertDialog(
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Icon(Icons.error, color: Colors.red),
+                Text("Thất bại", style: dialogTitleStyle.copyWith(color: Colors.red),),
+              ],
+            ),
+            content: Text("Cập nhật thất bại, vui lòng thử lại sau", style: dialogContentStyle,),
+            actions: [
+              TextButton(onPressed: (){
+                Navigator.pop(context);
+              }, child: Text("Xác nhận", style: dialogContentStyle))
+            ],
+          );
+        });
+      }
+    }else{
+      print("Không có trailer nào để upload");
+      showDialog(context: context, builder: (context){
+        return AlertDialog(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(Icons.error, color: Colors.red),
+              Text("Thất bại", style: dialogTitleStyle.copyWith(color: Colors.red),),
+            ],
+          ),
+          content: Text("Không có trailer nào để upload ", style: dialogContentStyle,),
+          actions: [
+            TextButton(onPressed: (){
+              Navigator.pop(context);
+            }, child: Text("Xác nhận", style: dialogContentStyle))
+          ],
+        );
+      });
+    }
+    _isSaving = false;
+    notifyListeners();
+  }
+
+  Future<void> uploadVideoOnTap(BuildContext context) async{
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+    final verifyToken = await Auth().sendTokenToServer();
+
+    context.pop();
+
+    if(!verifyToken){
+      showDialog(context: context, builder: (context){
+        return AlertDialog(
+          title: Text("Lỗi xác thực", style: dialogTitleStyle.copyWith(color: Colors.red),),
+          content: Text("Token không hợp lệ!", style: dialogContentStyle,),
+          actions: [
+            TextButton(onPressed: () {
+              context.pop();
+            },
+                child: Text("Xác nhận", style: dialogContentStyle))
+          ],
+        );
+      });
+      return;
+    }
+
+    _isSaving = true;
+    _isEdited = false;
+
+    notifyListeners();
+
+    bool isVideoUpdated = false;
+    bool isAlready = false;
+
+    if (_film != null) {
+      isAlready = await checkVideo();
+    }
+    if (isAlready){
+      isVideoUpdated = await uploadVideo();
+      if (isVideoUpdated) {
+        print("Upload trailer thành công!");
+        _isEdited = false; // Hoàn tất chỉnh sửa nếu có ít nhất 1 thành công
+        showDialog(context: context, builder: (context){
+          return AlertDialog(
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Icon(Icons.info, color: Colors.green),
+                Text("Thành công", style: dialogTitleStyle.copyWith(color: Colors.green),),
+              ],
+            ),
+            content: Text("Cập nhật thành công!", style: dialogContentStyle,),
+            actions: [
+              TextButton(onPressed: (){
+                Navigator.pop(context);
+              }, child: Text("Xác nhận", style: dialogContentStyle))
+            ],
+          );
+        });
+      } else {
+        print("Upload video không thành công!");
+        _isEdited = true; // Giữ chế độ chỉnh sửa nếu không có cập nhật nào thành công
+        showDialog(context: context, builder: (context){
+          return AlertDialog(
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Icon(Icons.error, color: Colors.red),
+                Text("Thất bại", style: dialogTitleStyle.copyWith(color: Colors.red),),
+              ],
+            ),
+            content: Text("Cập nhật thất bại, vui lòng thử lại sau", style: dialogContentStyle,),
+            actions: [
+              TextButton(onPressed: (){
+                Navigator.pop(context);
+              }, child: Text("Xác nhận", style: dialogContentStyle))
+            ],
+          );
+        });
+      }
+    }else{
+      print("Không có video nào để upload");
+      showDialog(context: context, builder: (context){
+        return AlertDialog(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(Icons.error, color: Colors.red),
+              Text("Thất bại", style: dialogTitleStyle.copyWith(color: Colors.red),),
+            ],
+          ),
+          content: Text("Không có video nào để upload ", style: dialogContentStyle,),
+          actions: [
+            TextButton(onPressed: (){
+              Navigator.pop(context);
+            }, child: Text("Xác nhận", style: dialogContentStyle))
+          ],
+        );
+      });
+    }
+    _isSaving = false;
+    notifyListeners();
+  }
+
+  void deleteOnTap(BuildContext context) async {
     BuildContext newContext = context;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    final verifyToken = await Auth().sendTokenToServer();
+
+    context.pop();
+
+    if(!verifyToken){
+      showDialog(context: context, builder: (context){
+        return AlertDialog(
+          title: Text("Lỗi xác thực", style: dialogTitleStyle.copyWith(color: Colors.red),),
+          content: Text("Token không hợp lệ!", style: dialogContentStyle,),
+          actions: [
+            TextButton(
+              onPressed: () {
+                context.pop();
+             },
+              child: Text("Xác nhận", style: dialogContentStyle)
+            )
+          ],
+        );
+      });
+      return;
+    }
+
     if(_film != null){
-      bool isFilmUpdated = true;
-      bool isImageUpdated = true;
-      showDialog(context: newContext, builder: (context){
+      showDialog(context: context, builder: (context){
         return AlertDialog(
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -259,20 +648,22 @@ class DetailedFilmViewModel extends ChangeNotifier{
             TextButton(onPressed: (){Navigator.pop(context);}, child: Text("Hủy", style: dialogContentStyle)),
             TextButton(
               onPressed: () async{
-                Navigator.pop(context);
-
+                // Navigator.pop(context);
+                context.pop();
                 showDialog(
                   context: newContext,
                   barrierDismissible: false,
                   builder: (context) => Center(child: CircularProgressIndicator()),
                 );
 
-                Navigator.pop(newContext);
-
+                // Navigator.pop(newContext);
+                newContext.pop();
                 bool isImageDeleted = await deleteImage();
                 bool isFilmDeleted = await deleteFilm();
+                bool isTrailerDeleted  = await deleteTrailer();
+                bool isVideoDeleted  = await deleteVideo();
 
-                if (isImageDeleted && isFilmDeleted){
+                if (isImageDeleted && isFilmDeleted && isTrailerDeleted && isVideoDeleted){
                   showDialog(
                     context: newContext,
                     builder: (context) {
@@ -288,8 +679,10 @@ class DetailedFilmViewModel extends ChangeNotifier{
                         actions: [
                           TextButton(
                             onPressed: () {
-                              Navigator.pop(newContext);
-                              Navigator.popAndPushNamed(context, RoutesName.MENU_FILM);
+                              // Navigator.pop(newContext);
+                              newContext.pop();
+                              context.go(RoutesName.MENU_FILM);
+                              // Navigator.popAndPushNamed(context, RoutesName.MENU_FILM);
                             },
                             child: Text("Đóng", style: dialogContentStyle),
                           ),
@@ -312,7 +705,8 @@ class DetailedFilmViewModel extends ChangeNotifier{
                         actions: [
                           TextButton(
                             onPressed: () {
-                              Navigator.pop(newContext);
+                              // Navigator.pop(newContext);
+                              newContext.pop();
                             },
                             child: Text("Đóng", style: dialogContentStyle),
                           ),
@@ -329,6 +723,7 @@ class DetailedFilmViewModel extends ChangeNotifier{
       });
     }
   }
+
   void cancelEditOnTap() {
     initState();
     notifyListeners();
@@ -362,7 +757,6 @@ class DetailedFilmViewModel extends ChangeNotifier{
     notifyListeners();
   }
 
-
   @override
   void dispose() {
     nameController.dispose();
@@ -375,9 +769,17 @@ class DetailedFilmViewModel extends ChangeNotifier{
     super.dispose();
   }
 
-  void ping() async{
+  void ping(BuildContext context) async{
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
     VideoService videoService = VideoService();
     await videoService.pingServer();
+    if(context.mounted){
+      context.pop();
+    }
   }
 
   void reset() {

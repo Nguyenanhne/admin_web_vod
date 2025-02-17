@@ -1,17 +1,16 @@
 import 'package:http/http.dart' as http;
-import 'dart:convert';
+
+import '../utils/utils.dart';
 
 
 class VideoService{
-  final String baseUrl = "http://localhost:3000";
   Future<void> pingServer() async {
     try {
-      final response = await http.get(Uri.parse("$baseUrl/ping"));
+      final response = await http.get(Uri.parse(PING));
       if (response.statusCode == 200) {
-        var data = jsonDecode(response.body);
-        print("✅ Server trả lời: ${data['message']}");
+        print("✅ Server trả lời: ${response.body}"); // Đọc body trực tiếp
       } else {
-        print("⚠️ Server trả về lỗi: ${response.statusCode}");
+        print("⚠ Server trả về lỗi: ${response.statusCode}");
       }
     } catch (e) {
       print("❌ Không thể kết nối server: $e");

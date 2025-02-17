@@ -1,10 +1,13 @@
 import 'package:admin/viewmodel/detailed_film_viewmodel.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:multi_dropdown/multi_dropdown.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
 import 'dart:typed_data';
+
+import '../widget/film_management_drawer.dart';
 
 class DetailedFilmPage extends StatefulWidget {
   const DetailedFilmPage({super.key});
@@ -39,7 +42,7 @@ class _DetailedFilmPageState extends State<DetailedFilmPage> {
       fontFamily: GoogleFonts.roboto().fontFamily
   );
   final titleStyle = TextStyle(
-      fontSize: 25,
+      fontSize: 20,
       color: Colors.white,
       fontWeight: FontWeight.bold,
       fontFamily: GoogleFonts.roboto().fontFamily
@@ -49,160 +52,336 @@ class _DetailedFilmPageState extends State<DetailedFilmPage> {
   @override
   Widget build(BuildContext context) {
     final detailedFilmVM  = Provider.of<DetailedFilmViewModel>(context, listen: false);
-
-    return FutureBuilder(
-      future: initFilm,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child:  CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Text('Lỗi: ${snapshot.error}', style: contentStyle);
-        }else if(detailedFilmVM.film == null){
-          return Scaffold(body: Center(child: Text("Lỗi khi tải phim", style: contentStyle)));
-        }else{
-          return Scaffold(
-            body: Consumer<DetailedFilmViewModel>(
-                builder: (context,detailedFilmVM, child ) {
-                  return SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        (detailedFilmVM.isSaving) ? LinearProgressIndicator() : SizedBox.shrink(),
-                        Row(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Consumer<DetailedFilmViewModel>(
-                                builder: (context, detailedFilmVM, child) {
-                                  return Text(
-                                    "CHI TIẾT PHIM: ${detailedFilmVM.film!.upperName}",
-                                    style: titleStyle,
-                                  );
-                                }
-                              ),
-                            ),
-                            Expanded(
-                              child: SizedBox(),
-                            ),
-                            Consumer<DetailedFilmViewModel>(
-                              builder: (context, detailedFilmVM, child) {
-                                return IconButton(
-                                  icon: Icon(
-                                      detailedFilmVM.isEdited ? Icons.save : Icons.edit
-                                  ),
-                                  onPressed: () {
-                                    detailedFilmVM.editOnTap(context);
-                                  },
-                                );
-                              }
-                            ),
-                            (detailedFilmVM.isEdited)
-                            ? IconButton(
-                              onPressed: (){
-                                detailedFilmVM.cancelEditOnTap();
-                              },
-                              icon: Icon(Icons.cancel)
-                            ): SizedBox.shrink(),
-                            (!detailedFilmVM.isSaving)
-                            ? IconButton(onPressed: (){
-                              detailedFilmVM.deleteOnTap(context);
-                            }, icon: Icon(Icons.delete)): SizedBox.shrink()
-                          ],
-                        ),
-                        Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Stack(
-                                  children: [
-                                    SizedBox(
-                                      width: widthImage,
-                                      height: heightImage,
-                                      child: Consumer<DetailedFilmViewModel>(
-                                        builder: (context, detailedFilmVM, child) {
-                                          return (detailedFilmVM.selectedImage != null)
-                                            ? Image.memory(detailedFilmVM.selectedImage!.bytes!)
-                                            : Image.network(detailedFilmVM.film!.url, fit: BoxFit.fill);
-                                        }
-                                      )
+    return Scaffold(
+      body: FutureBuilder(
+          future: initFilm,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child:  CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Text('Lỗi: ${snapshot.error}', style: contentStyle);
+            }else if(detailedFilmVM.film == null){
+              return Scaffold(body: Center(child: Text("Lỗi khi tải phim", style: contentStyle)));
+            }else{
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  bool isSmallScreen = constraints.maxWidth < 1100;
+                  return Consumer<DetailedFilmViewModel>(
+                      builder: (context,detailedFilmVM, child ) {
+                        return SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              (detailedFilmVM.isSaving) ? LinearProgressIndicator() : SizedBox.shrink(),
+                              // Row(
+                              //   children: [
+                              //     Padding(
+                              //       padding: const EdgeInsets.all(16.0),
+                              //       child: Consumer<DetailedFilmViewModel>(
+                              //           builder: (context, detailedFilmVM, child) {
+                              //             return Text(
+                              //               "CHI TIẾT PHIM: ${detailedFilmVM.film!.upperName}",
+                              //               style: titleStyle,
+                              //             );
+                              //           }
+                              //       ),
+                              //     ),
+                              //     Expanded(
+                              //       child: SizedBox(),
+                              //     ),
+                              //     Consumer<DetailedFilmViewModel>(
+                              //         builder: (context, detailedFilmVM, child) {
+                              //           return IconButton(
+                              //             icon: Icon(
+                              //                 detailedFilmVM.isEdited ? Icons.save : Icons.edit
+                              //             ),
+                              //             onPressed: () {
+                              //               detailedFilmVM.editOnTap(context);
+                              //             },
+                              //           );
+                              //         }
+                              //     ),
+                              //     (detailedFilmVM.isEdited)
+                              //         ? IconButton(
+                              //         onPressed: (){
+                              //           detailedFilmVM.cancelEditOnTap();
+                              //         },
+                              //         icon: Icon(Icons.cancel)
+                              //     ): SizedBox.shrink(),
+                              //     (!detailedFilmVM.isSaving)
+                              //         ? IconButton(onPressed: () async {
+                              //       detailedFilmVM.deleteOnTap(context);
+                              //     }, icon: Icon(Icons.delete)): SizedBox.shrink(),
+                              //
+                              //     (detailedFilmVM.isEdited)
+                              //         ? IconButton(onPressed: () async {
+                              //       detailedFilmVM.uploadVideoOnTap(context);
+                              //     }, icon: Icon(Icons.drive_folder_upload)): SizedBox.shrink(),
+                              //
+                              //     (detailedFilmVM.isEdited)
+                              //         ? IconButton(onPressed: () async {
+                              //       detailedFilmVM.uploadTrailerOnTap(context);
+                              //     }, icon: Icon(Icons.file_open)): SizedBox.shrink()
+                              //   ],
+                              // ),
+                              Row(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Consumer<DetailedFilmViewModel>(
+                                      builder: (context, detailedFilmVM, child) {
+                                        return Text(
+                                          "CHI TIẾT PHIM: ${detailedFilmVM.film!.upperName}",
+                                          style: titleStyle,
+                                        );
+                                      },
                                     ),
-                                    Positioned.fill(
-                                      child: Align(
-                                        alignment: Alignment.center,
-                                        child: detailedFilmVM.isEdited ? IconButton(
-                                          onPressed: (){
-                                            detailedFilmVM.pickImage();
-                                          },
-                                          icon: Icon(
-                                            Icons.upload,
-                                            color: Colors.black.withValues(alpha: 0.8),
-                                            size: 100,
+                                  ),
+                                  Expanded(child: SizedBox()),
+
+                                  // Nút Menu chứa tất cả các hành động
+                                  Consumer<DetailedFilmViewModel>(
+                                    builder: (context, detailedFilmVM, child) {
+                                      return PopupMenuButton<String>(
+                                        icon: Icon(Icons.more_vert), // Dấu ba chấm
+                                        onSelected: (String value) {
+                                          if (value == 'edit') {
+                                            detailedFilmVM.editOnTap(context);
+                                          } else if (value == 'save') {
+                                            detailedFilmVM.editOnTap(context);
+                                          } else if (value == 'cancel') {
+                                            detailedFilmVM.cancelEditOnTap();
+                                          } else if (value == 'delete') {
+                                            detailedFilmVM.deleteOnTap(context);
+                                          } else if (value == 'upload_video') {
+                                            detailedFilmVM.uploadVideoOnTap(context);
+                                          } else if (value == 'upload_trailer') {
+                                            detailedFilmVM.uploadTrailerOnTap(context);
+                                          }
+                                        },
+                                        itemBuilder: (BuildContext context) => [
+                                          // Nút Edit / Save
+                                          PopupMenuItem(
+                                            value: detailedFilmVM.isEdited ? 'save' : 'edit',
+                                            child: ListTile(
+                                              leading: Icon(detailedFilmVM.isEdited ? Icons.save : Icons.edit),
+                                              title: Text(detailedFilmVM.isEdited ? 'Lưu' : 'Chỉnh sửa'),
+                                            ),
                                           ),
-                                        ) : SizedBox.shrink(),
-                                      ),
-                                    )
-                                  ]
-                                ),
-                                SizedBox(width: 20),
-                                Expanded(
-                                  child: Form(
-                                    key: detailedFilmVM.formKey,
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.start,
-                                      children: [
-                                        buildTextFormField("Tên phim", detailedFilmVM.nameController),
-                                        buildTextFormField("Mô tả", detailedFilmVM.descriptionController),
-                                        buildTextFormField("Diễn viên", detailedFilmVM.actorsController),
-                                        buildTextFormField("Đạo diễn", detailedFilmVM.directorController),
-                                        Row(
+                                          // Nút Hủy (chỉ hiển thị khi đang chỉnh sửa)
+                                          if (detailedFilmVM.isEdited)
+                                            PopupMenuItem(
+                                              value: 'cancel',
+                                              child: ListTile(
+                                                leading: Icon(Icons.cancel, color: Colors.orange),
+                                                title: Text('Hủy chỉnh sửa'),
+                                              ),
+                                            ),
+                                          // Nút Xóa (chỉ hiển thị khi không đang lưu)
+                                          if (!detailedFilmVM.isSaving)
+                                            PopupMenuItem(
+                                              value: 'delete',
+                                              child: ListTile(
+                                                leading: Icon(Icons.delete, color: Colors.red),
+                                                title: Text('Xóa phim'),
+                                              ),
+                                            ),
+                                          // Nút Upload Video (chỉ hiển thị khi đang chỉnh sửa)
+                                          if (detailedFilmVM.isEdited)
+                                            PopupMenuItem(
+                                              value: 'upload_video',
+                                              child: ListTile(
+                                                leading: Icon(Icons.drive_folder_upload),
+                                                title: Text('Tải lên Video'),
+                                              ),
+                                            ),
+                                          // Nút Upload Trailer (chỉ hiển thị khi đang chỉnh sửa)
+                                          if (detailedFilmVM.isEdited)
+                                            PopupMenuItem(
+                                              value: 'upload_trailer',
+                                              child: ListTile(
+                                                leading: Icon(Icons.file_open),
+                                                title: Text('Tải lên Trailer'),
+                                              ),
+                                            ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
+                              (!isSmallScreen) ? Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Stack(
                                           children: [
-                                            Expanded(
-                                              child: buildDropdownButton(
+                                            SizedBox(
+                                                width: widthImage,
+                                                height: heightImage,
+                                                child: Consumer<DetailedFilmViewModel>(
+                                                    builder: (context, detailedFilmVM, child) {
+                                                      return (detailedFilmVM.selectedImage != null)
+                                                          ? Image.memory(detailedFilmVM.selectedImage!.bytes!)
+                                                          : Image.network(detailedFilmVM.film!.url, fit: BoxFit.fill);
+                                                    }
+                                                )
+                                            ),
+                                            Positioned.fill(
+                                              child: Align(
+                                                alignment: Alignment.center,
+                                                child: detailedFilmVM.isEdited ? IconButton(
+                                                  onPressed: (){
+                                                    detailedFilmVM.pickImage();
+                                                  },
+                                                  icon: Icon(
+                                                    Icons.upload,
+                                                    color: Colors.black.withValues(alpha: 0.8),
+                                                    size: 100,
+                                                  ),
+                                                ) : SizedBox.shrink(),
+                                              ),
+                                            )
+                                          ]
+                                      ),
+                                      SizedBox(width: 20),
+                                      Expanded(
+                                        child: Form(
+                                          key: detailedFilmVM.formKey,
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.start,
+                                            children: [
+                                              buildTextFormField("Tên phim", detailedFilmVM.nameController),
+                                              buildTextFormField("Mô tả", detailedFilmVM.descriptionController),
+                                              buildTextFormField("Diễn viên", detailedFilmVM.actorsController),
+                                              buildTextFormField("Đạo diễn", detailedFilmVM.directorController),
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: buildDropdownButton(
+                                                        "Thể loại",
+                                                        detailedFilmVM.typeSelectController,
+                                                        detailedFilmVM.typeItems,
+                                                        "Thể loại",
+                                                        detailedFilmVM.maxTypeSelected
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    child: buildDropdownButton(
+                                                        "Độ tuổi",
+                                                        detailedFilmVM.ageSelectController,
+                                                        detailedFilmVM.ageItems,
+                                                        "Tuổi",
+                                                        detailedFilmVM.maxAgeSelected
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    child: buildDropdownButton(
+                                                        "Năm phát hành",
+                                                        detailedFilmVM.yearSelectController,
+                                                        detailedFilmVM.yearItems,
+                                                        "Năm",
+                                                        detailedFilmVM.maxYearSelected
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                              ) : Padding(
+                                  padding: const EdgeInsets.all(16.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Stack (
+                                          children: [
+                                            SizedBox(
+                                                width: widthImage,
+                                                height: heightImage,
+                                                child: Consumer<DetailedFilmViewModel>(
+                                                    builder: (context, detailedFilmVM, child) {
+                                                      return (detailedFilmVM.selectedImage != null)
+                                                          ? Image.memory(detailedFilmVM.selectedImage!.bytes!)
+                                                          : Image.network(detailedFilmVM.film!.url, fit: BoxFit.fill);
+                                                    }
+                                                )
+                                            ),
+                                            Positioned.fill(
+                                              child: Align(
+                                                alignment: Alignment.center,
+                                                child: detailedFilmVM.isEdited ? IconButton(
+                                                  onPressed: (){
+                                                    detailedFilmVM.pickImage();
+                                                  },
+                                                  icon: Icon(
+                                                    Icons.upload,
+                                                    color: Colors.black.withValues(alpha: 0.8),
+                                                    size: 100,
+                                                  ),
+                                                ) : SizedBox.shrink(),
+                                              ),
+                                            )
+                                          ]
+                                      ),
+                                      SizedBox(width: 20),
+                                      Form(
+                                        key: detailedFilmVM.formKey,
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.start,
+                                          children: [
+                                            buildTextFormField("Tên phim", detailedFilmVM.nameController),
+                                            buildTextFormField("Mô tả", detailedFilmVM.descriptionController),
+                                            buildTextFormField("Diễn viên", detailedFilmVM.actorsController),
+                                            buildTextFormField("Đạo diễn", detailedFilmVM.directorController),
+                                            buildDropdownButton(
                                                 "Thể loại",
                                                 detailedFilmVM.typeSelectController,
                                                 detailedFilmVM.typeItems,
                                                 "Thể loại",
                                                 detailedFilmVM.maxTypeSelected
-                                              ),
                                             ),
-                                            Expanded(
-                                              child: buildDropdownButton(
+                                            buildDropdownButton(
                                                 "Độ tuổi",
                                                 detailedFilmVM.ageSelectController,
                                                 detailedFilmVM.ageItems,
                                                 "Tuổi",
                                                 detailedFilmVM.maxAgeSelected
-                                              ),
                                             ),
-                                            Expanded(
-                                              child: buildDropdownButton(
+                                            buildDropdownButton(
                                                 "Năm phát hành",
                                                 detailedFilmVM.yearSelectController,
                                                 detailedFilmVM.yearItems,
                                                 "Năm",
                                                 detailedFilmVM.maxYearSelected
-                                              ),
                                             ),
+
                                           ],
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            )
-                        ),
-                        TextButton(onPressed: (){
-                          detailedFilmVM.ping();
-                        }, child: Text("Ping to server"))
-                      ],
-                    ),
+                                      ),
+                                    ],
+                                  )
+                              ),
+                              TextButton(
+                                  onPressed: (){
+                                    detailedFilmVM.ping(context);
+                                  },
+                                  child: Text("Ping to server")
+                              ),
+                            ],
+                          ),
+                        );
+                      }
                   );
                 }
-            ),
-          );
-        }
-      }
+              );
+            }
+          }
+      ),
     );
   }
   Widget buildTextFormField(String label, TextEditingController controller){

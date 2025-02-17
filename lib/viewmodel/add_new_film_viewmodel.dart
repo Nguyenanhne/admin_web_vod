@@ -1,11 +1,13 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:multi_dropdown/multi_dropdown.dart';
 import 'dart:html';
 import '../model/film_model.dart';
 import '../routes/routes_name.dart';
+import '../service/auth_service.dart';
 import '../service/film_service.dart';
 import '../service/type_service.dart';
 
@@ -56,6 +58,7 @@ class AddNewFilmViewModel extends ChangeNotifier{
   final MultiSelectController<int> yearSelectController = MultiSelectController<int>();
 
   Future<void> initState() async{
+    reset();
     _types = await _typeService.getAllTypes();
     if(_types.isNotEmpty){
       Future.wait([
@@ -96,6 +99,23 @@ class AddNewFilmViewModel extends ChangeNotifier{
   }
   Future<void> saveOnTap(BuildContext context) async{
     if(formKey.currentState!.validate() && _selectedImage != null){
+      //check token
+      final verifyToken = await Auth().sendTokenToServer();
+      if(!verifyToken){
+        if (!context.mounted) return;
+        showDialog(context: context, builder: (context){
+          return AlertDialog(
+            title: Text("Lỗi xác thực", style: dialogTitleStyle.copyWith(color: Colors.red),),
+            content: Text("Token không hợp lệ!", style: dialogContentStyle,),
+            actions: [
+              TextButton(onPressed: () { context.pop(); },
+              child: Text("Xác nhận", style: dialogContentStyle))
+            ],
+          );
+        });
+        return;
+      }
+
       _isSaving = true;
       notifyListeners();
       bool isFilmUpdated = false;
@@ -109,6 +129,7 @@ class AddNewFilmViewModel extends ChangeNotifier{
       }
       if (isFilmUpdated && isImageUpdated) {
         print("Thêm phim thành công!");
+        if (!context.mounted) return;
         showDialog(context: context, builder: (context){
           return AlertDialog(
             title: Text("Thành công", style: dialogTitleStyle.copyWith(color: Colors.green),),
@@ -116,23 +137,21 @@ class AddNewFilmViewModel extends ChangeNotifier{
             actions: [
               TextButton(onPressed: (){
                 window.sessionStorage['filmID'] = newID!;
-                Navigator.pushNamed(
-                  context,
-                  RoutesName.DETAILED_FILM,
-                );
+                context.go(RoutesName.DETAILED_FILM);
               }, child: Text("Xác nhận", style: dialogContentStyle))
             ],
           );
         });
       } else {
         print("Thêm phim không thành công!");
+        if (!context.mounted) return;
         showDialog(context: context, builder: (context){
           return AlertDialog(
             title: Text("Thất bại", style: dialogTitleStyle.copyWith(color: Colors.red),),
             content: Text("Thêm phim thất bại, vui lòng thử lại sau", style: dialogContentStyle,),
             actions: [
               TextButton(onPressed: (){
-                Navigator.pop(context);
+                context.pop();
               }, child: Text("Xác nhận", style: dialogContentStyle))
             ],
           );

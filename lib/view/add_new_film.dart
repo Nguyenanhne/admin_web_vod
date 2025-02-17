@@ -1,8 +1,12 @@
 import 'package:admin/viewmodel/add_new_film_viewmodel.dart';
+import 'package:admin/widget/add_type_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:multi_dropdown/multi_dropdown.dart';
 import 'package:provider/provider.dart';
+
+import '../widget/film_management_drawer.dart';
 class AddNewFilmPage extends StatefulWidget {
   const AddNewFilmPage({super.key});
   @override
@@ -40,156 +44,247 @@ class _AddNewFilmPageState extends State<AddNewFilmPage> {
   @override
   Widget build(BuildContext context) {
     final addNewFilmVM  = Provider.of<AddNewFilmViewModel>(context, listen: false);
-    return FutureBuilder(
-      future: init,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child:  CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Text('Lỗi: ${snapshot.error}', style: contentStyle);
-        }else if(addNewFilmVM.typeItems.isEmpty){
-          return Center(child: Text("Lỗi khi tải", style: contentStyle));
-        }else{
-        return Scaffold(
-          body: Consumer<AddNewFilmViewModel>(
-            builder: (context,addNewFilmVM, child ) {
-              return SingleChildScrollView(
-                child: Column(
-                  children: [
-                    (addNewFilmVM.isSaving) ? LinearProgressIndicator() : SizedBox.shrink(),
-                    Row(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Text(
-                            "THÊM PHIM MỚI",
-                            style: titleStyle,
-                          ),
-                        ),
-                        Expanded(
-                          child: SizedBox(),
-                        ),
-                        Consumer<AddNewFilmViewModel>(
-                          builder: (context, addNewFilmVM, child) {
-                            return IconButton(
-                              icon: Icon(
-                                  Icons.add
-                              ),
-                              onPressed: () {
-                                addNewFilmVM.newOnTap();
-                              },
-                            );
-                          }
-                        ),
-                        Consumer<AddNewFilmViewModel>(
-                          builder: (context, addNewFilmVM, child) {
-                            return IconButton(
-                              icon: Icon(
-                                Icons.save,
-                              ),
-                              onPressed: () {
-                                addNewFilmVM.saveOnTap(context);
-                              },
-                            );
-                          }
-                        ),
-                      ],
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+    return Scaffold(
+      body: FutureBuilder(
+        future: init,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child:  CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Text('Lỗi: ${snapshot.error}', style: contentStyle);
+          }else if(addNewFilmVM.typeItems.isEmpty){
+            return Center(child: Text("Lỗi khi tải", style: contentStyle));
+          }else{
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              bool isSmallScreen = constraints.maxWidth  < 1100;
+              return Consumer<AddNewFilmViewModel>(
+                  builder: (context,addNewFilmVM, child ) {
+                    return SingleChildScrollView(
+                      child: Column(
                         children: [
-                          Stack(
+                          (addNewFilmVM.isSaving) ? LinearProgressIndicator() : SizedBox.shrink(),
+                          Row(
                             children: [
+                              Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Text(
+                                  "THÊM PHIM MỚI",
+                                  style: titleStyle,
+                                ),
+                              ),
+                              Expanded(
+                                child: SizedBox(),
+                              ),
                               Consumer<AddNewFilmViewModel>(
                                 builder: (context, addNewFilmVM, child) {
-                                  return (addNewFilmVM.selectedImage != null)
-                                    ? SizedBox(width: widthImage, height: heightImage, child: Image.memory(addNewFilmVM.selectedImage!.bytes!))
-                                    : Container(width: widthImage, height: heightImage, color: Colors.grey);
+                                  return Tooltip(
+                                    message: "Làm mới",
+                                    child: IconButton(
+                                      icon: Icon(
+                                          Icons.add
+                                      ),
+                                      onPressed: () {
+                                        addNewFilmVM.newOnTap();
+                                      },
+                                    ),
+                                  );
                                 }
                               ),
-                              Positioned.fill(
-                                child: Align(
-                                  alignment: Alignment.center,
-                                  child: IconButton(
-                                    onPressed: (){
-                                      addNewFilmVM.pickImage();
-                                    },
-                                    icon: Icon(
-                                      Icons.upload,
-                                      color: Colors.black.withValues(alpha: 0.8),
-                                      size: 100,
+                              Consumer<AddNewFilmViewModel>(
+                                builder: (context, addNewFilmVM, child) {
+                                  return Tooltip(
+                                    message: "Thêm phim mới",
+                                    child: IconButton(
+                                      icon: Icon(
+                                        Icons.save,
+                                      ),
+                                      onPressed: () {
+                                        addNewFilmVM.saveOnTap(context);
+                                      },
+                                    ),
+                                  );
+                                }
+                              ),
+                              Tooltip(
+                                message: "Thêm thể loại",
+                                child: IconButton(onPressed: (){
+                                  showDialog(context: context, builder:(context) => AddTypeDialog());
+                                }, icon: Icon(Icons.type_specimen)),
+                              )
+                            ],
+                          ),
+                          (!isSmallScreen) ? Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Stack(
+                                  children: [
+                                    Consumer<AddNewFilmViewModel>(
+                                      builder: (context, addNewFilmVM, child) {
+                                        return (addNewFilmVM.selectedImage != null)
+                                          ? SizedBox(width: widthImage, height: heightImage, child: Image.memory(addNewFilmVM.selectedImage!.bytes!))
+                                          : Container(width: widthImage, height: heightImage, color: Colors.grey);
+                                      }
+                                    ),
+                                    Positioned.fill(
+                                      child: Align(
+                                        alignment: Alignment.center,
+                                        child: IconButton(
+                                          onPressed: (){
+                                            addNewFilmVM.pickImage();
+                                          },
+                                          icon: Icon(
+                                            Icons.upload,
+                                            color: Colors.black.withValues(alpha: 0.8),
+                                            size: 100,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Consumer<AddNewFilmViewModel>(
+                                      builder: (context, addNewFilmVM, child){
+                                        return (addNewFilmVM.selectedImageState == false)
+                                          ? Positioned(bottom: 0, left: 0, right: 0, child: Align(alignment:Alignment.center, child: Text("Vui lòng chọn hình ảnh", style: contentStyle.copyWith(color: Colors.red))))
+                                          : SizedBox.shrink();
+                                      },
+                                    )
+                                  ]
+                                ),
+                                SizedBox(width: 20),
+                                Expanded(
+                                  child: Form(
+                                    key: addNewFilmVM.formKey,
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: [
+                                        buildTextFormField("Tên phim", addNewFilmVM.nameController),
+                                        buildTextFormField("Mô tả", addNewFilmVM.descriptionController),
+                                        buildTextFormField("Diễn viên", addNewFilmVM.actorsController),
+                                        buildTextFormField("Đạo diễn", addNewFilmVM.directorController),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: buildDropdownButton(
+                                                "Thể loại",
+                                                addNewFilmVM.typeSelectController,
+                                                addNewFilmVM.typeItems,
+                                                "Thể loại",
+                                                addNewFilmVM.maxTypeSelected
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: buildDropdownButton(
+                                                  "Độ tuổi",
+                                                  addNewFilmVM.ageSelectController,
+                                                  addNewFilmVM.ageItems,
+                                                  "Tuổi",
+                                                  addNewFilmVM.maxAgeSelected
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: buildDropdownButton(
+                                                  "Năm phát hành",
+                                                  addNewFilmVM.yearSelectController,
+                                                  addNewFilmVM.yearItems,
+                                                  "Năm",
+                                                  addNewFilmVM.maxYearSelected
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
-                              ),
-                              Consumer<AddNewFilmViewModel>(
-                                builder: (context, addNewFilmVM, child){
-                                  return (addNewFilmVM.selectedImageState == false)
-                                    ? Positioned(bottom: 0, left: 0, right: 0, child: Align(alignment:Alignment.center, child: Text("Vui lòng chọn hình ảnh", style: contentStyle.copyWith(color: Colors.red))))
-                                    : SizedBox.shrink();
-                                },
-                              )
-                            ]
-                          ),
-                          SizedBox(width: 20),
-                          Expanded(
-                            child: Form(
-                              key: addNewFilmVM.formKey,
+                              ],
+                            )
+                          ) :Padding(
+                              padding: const EdgeInsets.all(16.0),
                               child: Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  buildTextFormField("Tên phim", addNewFilmVM.nameController),
-                                  buildTextFormField("Mô tả", addNewFilmVM.descriptionController),
-                                  buildTextFormField("Diễn viên", addNewFilmVM.actorsController),
-                                  buildTextFormField("Đạo diễn", addNewFilmVM.directorController),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: buildDropdownButton(
-                                          "Thể loại",
-                                          addNewFilmVM.typeSelectController,
-                                          addNewFilmVM.typeItems,
-                                          "Thể loại",
-                                          addNewFilmVM.maxTypeSelected
+                                  Stack(
+                                      children: [
+                                        Consumer<AddNewFilmViewModel>(
+                                            builder: (context, addNewFilmVM, child) {
+                                              return (addNewFilmVM.selectedImage != null)
+                                                  ? SizedBox(width: widthImage, height: heightImage, child: Image.memory(addNewFilmVM.selectedImage!.bytes!))
+                                                  : Container(width: widthImage, height: heightImage, color: Colors.grey);
+                                            }
                                         ),
-                                      ),
-                                      Expanded(
-                                        child: buildDropdownButton(
+                                        Positioned.fill(
+                                          child: Align(
+                                            alignment: Alignment.center,
+                                            child: IconButton(
+                                              onPressed: (){
+                                                addNewFilmVM.pickImage();
+                                              },
+                                              icon: Icon(
+                                                Icons.upload,
+                                                color: Colors.black.withValues(alpha: 0.8),
+                                                size: 100,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Consumer<AddNewFilmViewModel>(
+                                          builder: (context, addNewFilmVM, child){
+                                            return (addNewFilmVM.selectedImageState == false)
+                                                ? Positioned(bottom: 0, left: 0, right: 0, child: Align(alignment:Alignment.center, child: Text("Vui lòng chọn hình ảnh", style: contentStyle.copyWith(color: Colors.red))))
+                                                : SizedBox.shrink();
+                                          },
+                                        )
+                                      ]
+                                  ),
+                                  SizedBox(width: 20),
+                                  Form(
+                                    key: addNewFilmVM.formKey,
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: [
+                                        buildTextFormField("Tên phim", addNewFilmVM.nameController),
+                                        buildTextFormField("Mô tả", addNewFilmVM.descriptionController),
+                                        buildTextFormField("Diễn viên", addNewFilmVM.actorsController),
+                                        buildTextFormField("Đạo diễn", addNewFilmVM.directorController),
+                                        buildDropdownButton(
+                                            "Thể loại",
+                                            addNewFilmVM.typeSelectController,
+                                            addNewFilmVM.typeItems,
+                                            "Thể loại",
+                                            addNewFilmVM.maxTypeSelected
+                                        ),
+                                        buildDropdownButton(
                                             "Độ tuổi",
                                             addNewFilmVM.ageSelectController,
                                             addNewFilmVM.ageItems,
                                             "Tuổi",
                                             addNewFilmVM.maxAgeSelected
                                         ),
-                                      ),
-                                      Expanded(
-                                        child: buildDropdownButton(
+                                        buildDropdownButton(
                                             "Năm phát hành",
                                             addNewFilmVM.yearSelectController,
                                             addNewFilmVM.yearItems,
                                             "Năm",
                                             addNewFilmVM.maxYearSelected
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ],
-                              ),
-                            ),
-                          ),
+                              )
+                          ) ,
                         ],
-                      )
-                    ),
-                  ],
-                ),
-              );
+                      ),
+                    );
+                  }
+                );
             }
-          ),
-        );
-      }
-      }
+          );
+        }
+        }
+      ),
     );
   }
   Widget buildTextFormField(String label, TextEditingController controller){
@@ -210,7 +305,7 @@ class _AddNewFilmPageState extends State<AddNewFilmPage> {
                 labelStyle: labelStyle,
             ),
             validator: (value){
-              if (value == null || value.isEmpty){
+              if (value == null || value.trim().isEmpty){
                 return 'Vui lòng nhập $label';
               }
               return null;

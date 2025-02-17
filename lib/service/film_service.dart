@@ -27,6 +27,24 @@ class FilmService{
       return null;
     }
   }
+  Future<List<FilmModel>> searchFilmNamesByName(String nameQuery) async {
+    try {
+      String upperCaseQuery = nameQuery.toUpperCase();
+      QuerySnapshot querySnapshot = await firestore.collection('Film')
+          .where('upperName', isGreaterThanOrEqualTo: upperCaseQuery)
+          .where('upperName', isLessThanOrEqualTo: upperCaseQuery + '\uf8ff')
+          .get();
+
+      List<FilmModel> films = querySnapshot.docs.map((doc) {
+        return FilmModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      }).toList();
+      return films;
+
+    } catch (e) {
+      print('Error searching film names: $e');
+      return [];
+    }
+  }
 
   Future<Map<String, dynamic>> fetchListFilm({
     required int limit,
