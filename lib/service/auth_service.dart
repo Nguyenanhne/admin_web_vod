@@ -16,21 +16,32 @@ class Auth {
 
       if (user == null) return null;
 
-      // Truy vấn Firestore để lấy role
-      final userDoc = await firestore.collection('User').doc(user.uid).get();
-
-      if (userDoc.exists) {
-        String? role = userDoc.data()?['role'];
-        if (role == "admin") {
-          print("Đăng nhập thành công với quyền admin.");
-          // await sendTokenToServer();
-          return user;
-        } else {
-          print("Tài khoản không có quyền admin.");
-          await firebaseAuth.signOut(); // Đăng xuất nếu không phải admin
-          return null;
-        }
+      bool isAdmin = false;
+      isAdmin = await sendTokenToServer();
+      if(isAdmin){
+        print("Đăng nhập thành công với quyền admin");
+        return user;
       }
+      else{
+        print("Tài khoản không có quyền admin.");
+        await firebaseAuth.signOut(); // Đăng xuất nếu không phải admin
+        return null;
+      }
+      // // Truy vấn Firestore để lấy role
+      // final userDoc = await firestore.collection('User').doc(user.uid).get();
+      //
+      // if (userDoc.exists) {
+      //   String? role = userDoc.data()?['role'];
+      //   if (role == "admin") {
+      //     print("Đăng nhập thành công với quyền admin.");
+      //     // await sendTokenToServer();
+      //     return user;
+      //   } else {
+      //     print("Tài khoản không có quyền admin.");
+      //     await firebaseAuth.signOut(); // Đăng xuất nếu không phải admin
+      //     return null;
+      //   }
+      // }
     } on FirebaseAuthException catch (e) {
       print("Tên đăng nhập hoặc mật khẩu không hợp lệ: $e");
     } catch (e) {
@@ -51,10 +62,8 @@ class Auth {
         return false;
       }
 
-      // URL của API server (thay bằng URL của bạn)
       String url = CHECK_TOKEN;
 
-      // Gửi yêu cầu HTTP POST với token trong header Authorization
       final response = await http.post(
         Uri.parse(url),
         headers: {
@@ -63,10 +72,16 @@ class Auth {
       );
       // Kiểm tra kết quả từ server
       if (response.statusCode == 200) {
-        print('Token hợp lệ. Dữ liệu đã được gửi thành công!');
+        print('Token hợp lệ!');
         return true;
       } else {
-        print('Lỗi: ${response.statusCode}');
+        print('Lỗi check id: ${response.statusCode}');
+        final data = json.decode(response.body);
+        if (data['success']) {
+          print('Success: ${data['message']}');
+        } else {
+          print('Failure: ${data['message']}');
+        }
         return false;
       }
     } catch (e) {

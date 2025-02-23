@@ -5,8 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:multi_dropdown/multi_dropdown.dart';
 import 'package:provider/provider.dart';
-
-import '../widget/film_management_drawer.dart';
 class AddNewFilmPage extends StatefulWidget {
   const AddNewFilmPage({super.key});
   @override

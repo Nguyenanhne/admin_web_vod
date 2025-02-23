@@ -58,7 +58,7 @@ class SignInViewModel extends ChangeNotifier{
 
       if(context.mounted){
         context.pop();
-        context.go(RoutesName.MENU_FILM); // Chuyển màn hình
+        context.go(RoutesName.MENU_FILM);
       }
     } else {
       if(context.mounted) {

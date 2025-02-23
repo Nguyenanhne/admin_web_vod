@@ -6,30 +6,6 @@ import '../model/film_model.dart';
 import '../service/film_service.dart';
 import '../viewmodel/search_vm.dart';
 
-class SearchPage extends StatefulWidget {
-  const SearchPage({super.key});
-
-  @override
-  State<SearchPage> createState() => _SearchPageState();
-}
-
-class _SearchPageState extends State<SearchPage> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        actions: [
-          IconButton(
-            onPressed: (){
-              showSearch(context: context, delegate: CustomSearchFilmDelegate());
-            }, 
-            icon: Icon(Icons.search)
-          )
-        ],
-      ),
-    );
-  }
-}
 class CustomSearchFilmDelegate extends SearchDelegate {
   final FilmService filmService = FilmService();
 
@@ -38,7 +14,10 @@ class CustomSearchFilmDelegate extends SearchDelegate {
       color: Colors.white
   );
   @override
+
   String? get searchFieldLabel => "Tìm kiếm";
+
+  TextStyle? get searchFieldStyle => contentStyle;
 
   @override
   List<Widget> buildActions(BuildContext context) {

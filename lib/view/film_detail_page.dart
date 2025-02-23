@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 import 'dart:io';
 import 'dart:typed_data';
 
-import '../widget/film_management_drawer.dart';
 
 class DetailedFilmPage extends StatefulWidget {
   const DetailedFilmPage({super.key});

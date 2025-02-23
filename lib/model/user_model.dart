@@ -3,7 +3,7 @@ class UserModel{
   final String name;
   final String email;
   final String role;
-  final bool isActivated;
+  bool isActivated;
 
   UserModel({required this.id, required this.name, required this.email, required this.role, required this.isActivated});
 

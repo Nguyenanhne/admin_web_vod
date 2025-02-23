@@ -1,10 +1,11 @@
 import 'package:admin/view/film_detail_page.dart';
 import 'package:admin/view/header.dart';
 import 'package:admin/viewmodel/menu_film_viewmodel.dart';
-import 'package:admin/widget/film_management_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../responsive.dart';
+import '../widget/search_film_delegate.dart';
 
 class MenuFilmPage extends StatefulWidget {
   const MenuFilmPage({super.key});
@@ -34,18 +35,37 @@ class _MenuFilmPageState extends State<MenuFilmPage> {
     final homeVM = Provider.of<MenuFilmViewModel>(context, listen: false);
     return LayoutBuilder(
       builder: (context, constraints) {
-        bool isSmallScreen = constraints.maxWidth < 800;
-        bool isMediumScreen = constraints.maxWidth < 1500;
+        bool isSmallScreen = Responsive.isMobile(context);
+        bool isMediumScreen = Responsive.isDesktop(context);
         int crossAxisCount = isSmallScreen ? 2 : (isMediumScreen ? 5 : 5);
         return Scaffold(
           body: CustomScrollView(
             controller: homeVM.scrollController,
             slivers: [
-              SliverToBoxAdapter(
-                child: Center(child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+              SliverAppBar(
+                floating: true,
+                pinned: true,
+                backgroundColor: Colors.transparent,
+                title: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
                   child: Text("Danh sách phim", style: contentStyle.copyWith(fontSize: 20, fontWeight: FontWeight.bold),),
-                )),
+                ),
+                actions: [
+                  InkWell(
+                    onTap: (){
+                      showSearch(context: context, delegate: CustomSearchFilmDelegate());
+                    },
+                    child: Row(
+                      children: [
+                        Text("Tìm kiếm", style: contentStyle.copyWith(fontWeight: FontWeight.bold)),
+                        SizedBox(width: 20),
+                        Icon(
+                          Icons.search
+                        )
+                      ],
+                    ),
+                  ),
+                ],
               ),
               FutureBuilder(
                   future: initListFilms,

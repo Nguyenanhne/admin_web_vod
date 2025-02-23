@@ -35,6 +35,9 @@ class MenuFilmViewModel extends ChangeNotifier{
   }
 
   Future<void> fetchFilms() async {
+    if (_films.isNotEmpty){
+      return;
+    }
     reset();
     try {
       final result = await _filmService.fetchListFilm(
@@ -99,5 +102,10 @@ class MenuFilmViewModel extends ChangeNotifier{
   void reset(){
     _films.clear();
     _lastDocument = null;
+  }
+  @override
+  void dispose() {
+    scrollController.dispose();
+    super.dispose();
   }
 }

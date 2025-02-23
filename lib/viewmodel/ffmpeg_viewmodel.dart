@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -56,16 +55,18 @@ class FfmpegViewModel extends ChangeNotifier {
     print(_selectedResolutions.toString());
   }
 
-   void trailerOnTap(){
+  void trailerOnTap(){
      _isTrailer = true;
      _isVideo = false;
      notifyListeners();
    }
+
   void videoOnTap(){
     _isTrailer = false;
     _isVideo = true;
     notifyListeners();
   }
+
   Future<void> uploadToServerOnTap(BuildContext context) async {
 
      if(!_isVideo && !_isTrailer){
@@ -114,8 +115,7 @@ class FfmpegViewModel extends ChangeNotifier {
     bool upload = false;
     bool hlsProcess = false;
 
-    upload = await uploadFile();
-
+    upload  = await uploadFileInChunks(_selectedFiles!);
     if (upload){
       print("Upload phim thành công");
       hlsProcess = await processHLS("video.mp4");
@@ -150,9 +150,7 @@ class FfmpegViewModel extends ChangeNotifier {
     _isProcess = false;
     reset();
     notifyListeners();
-    // return _success;
   }
-
 
   Future<void> pickFileOnTap() async {
     html.FileUploadInputElement uploadInput = html.FileUploadInputElement()..accept = 'video/mp4';
@@ -162,44 +160,101 @@ class FfmpegViewModel extends ChangeNotifier {
       if (uploadInput.files!.isNotEmpty) {
         _selectedFiles = uploadInput.files!.first;
         pathController.text = "Tệp đã chọn: ${_selectedFiles!.name}";
-
         print("Đã chọn file: ${_selectedFiles!.name} (${_selectedFiles!.size} bytes)");
         notifyListeners(); // Cập nhật UI
       }
     });
   }
 
-  Future<bool> uploadFile() async {
-    if (_selectedFiles == null) {
-      print("Chưa chọn file!");
-      return false;
-    }
+  Future<bool> uploadFileInChunks(html.File file) async {
+    final int chunkSize = 5 * 1024 * 1024; // 5 MB
 
-    Uri uri = _isTrailer
-        ? Uri.parse(UPLOAD_TRAILER_TO_SERVER)
-        : Uri.parse(UPLOAD_VIDEO_TO_SERVER);
+    int totalChunks = (file.size / chunkSize).ceil();
+    int uploadedChunks = 0;
 
-    final formData = html.FormData();
-    formData.appendBlob('file', _selectedFiles!, "video.mp4");
+    for (int i = 0; i < totalChunks; i++) {
+      int start = i * chunkSize;
+      int end = (start + chunkSize > file.size) ? file.size : start + chunkSize;
 
-    final request = html.HttpRequest();
-    final completer = Completer<bool>();
+      Uint8List chunkData = await readFileChunk(file, start, end);
 
-    request.open('POST', uri.toString(), async: true);
-    request.send(formData);
+      bool success = await uploadChunk(file.name, i, totalChunks, chunkData);
 
-    request.onLoadEnd.listen((event) {
-      if (request.status == 200) {
-        print("Upload phim thành công!");
-        completer.complete(true);
+      if (success) {
+        uploadedChunks++;
+        print("Chunk $i uploaded successfully");
       } else {
-        print("Lỗi khi upload phim : ${request.status} - ${request.responseText}");
-        completer.complete(false);
+        print("Chunk $i failed to upload");
+        return false;
       }
+    }
+    if (uploadedChunks == totalChunks) {
+      print("Upload hoàn tất!");
+      return true;
+    }
+    return false;
+  }
+
+  Future<Uint8List> readFileChunk(html.File file, int start, int end) async {
+    final reader = html.FileReader();
+    final completer = Completer<Uint8List>();
+
+    reader.readAsArrayBuffer(file.slice(start, end));
+    reader.onLoadEnd.listen((_) {
+      completer.complete(reader.result as Uint8List);
     });
+
     return completer.future;
   }
 
+  Future<bool> uploadChunk(String fileName, int index, int totalChunks, Uint8List chunkData) async {
+      Uri uri = _isTrailer
+          ? Uri.parse(UPLOAD_TRAILER_TO_SERVER)
+          : Uri.parse(UPLOAD_VIDEO_TO_SERVER);
+    try {
+      var request = http.MultipartRequest('POST', uri)
+        ..fields['fileName'] = fileName
+        ..fields['chunkIndex'] = index.toString()
+        ..fields['totalChunks'] = totalChunks.toString()
+        ..files.add(http.MultipartFile.fromBytes('file', chunkData, filename: "$fileName.part$index"));
+      var response = await request.send();
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Lỗi khi upload chunk: $e");
+      return false;
+    }
+  }
+  // Future<bool> uploadFile() async {
+  //   if (_selectedFiles == null) {
+  //     print("Chưa chọn file!");
+  //     return false;
+  //   }
+  //
+  //   Uri uri = _isTrailer
+  //       ? Uri.parse(UPLOAD_TRAILER_TO_SERVER)
+  //       : Uri.parse(UPLOAD_VIDEO_TO_SERVER);
+  //
+  //   final formData = html.FormData();
+  //   formData.appendBlob('file', _selectedFiles!, "video.mp4");
+  //
+  //   final request = html.HttpRequest();
+  //   final completer = Completer<bool>();
+  //
+  //   request.open('POST', uri.toString(), async: true);
+  //   request.send(formData);
+  //
+  //   request.onLoadEnd.listen((event) {
+  //     if (request.status == 200) {
+  //       print("Upload phim thành công!");
+  //       completer.complete(true);
+  //     } else {
+  //       print("Lỗi khi upload phim : ${request.status} - ${request.responseText}");
+  //       completer.complete(false);
+  //     }
+  //   });
+  //   return completer.future;
+  // }
+  //
   Future<bool> processHLS(String fileName) async{
      print("Tiến hành cắt phim");
     var uri = null;

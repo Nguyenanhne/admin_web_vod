@@ -1,3 +1,5 @@
+import 'package:admin/viewmodel/detailed_film_viewmodel.dart';
+import 'package:admin/viewmodel/menu_film_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodel/sign_in_viewmodel.dart';
@@ -13,7 +15,7 @@ class SignInPage extends StatefulWidget {
 class _SignInPageState extends State<SignInPage> {
   @override
   Widget build(BuildContext context) {
-    final viewModel = Provider.of<SignInViewModel>(context);
+    final viewModel = Provider.of<SignInViewModel>(context, listen: false);
     return Scaffold(
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
