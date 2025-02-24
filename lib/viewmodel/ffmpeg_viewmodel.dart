@@ -138,7 +138,7 @@ class FfmpegViewModel extends ChangeNotifier {
       print("Cắt phim thành công");
       showDialog(context: context, builder: (context){
         return AlertDialog(
-          title: Text("Thành công", style: dialogTitleStyle.copyWith(color: Colors.red),),
+          title: Text("Thành công", style: dialogTitleStyle.copyWith(color: Colors.green),),
           content: Text("Đã xử lý video thành công!", style: dialogContentStyle,),
           actions: [
             TextButton(onPressed: () { context.pop(); },

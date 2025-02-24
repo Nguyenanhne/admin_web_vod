@@ -69,6 +69,7 @@ class CustomSearchFilmDelegate extends SearchDelegate {
             return ListTile(
               title: Text(films[index].name, style: contentStyle),
               onTap: () {
+                print(films[index].name);
                 searchVM.searchOnTap(context, films[index]);
               },
             );

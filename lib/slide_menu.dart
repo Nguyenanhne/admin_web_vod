@@ -40,9 +40,7 @@ class SideMenu extends StatelessWidget {
               ),
               DrawerListTile(
                 title: "Tìm kiếm",
-                press: () {
-                  showSearch(context: context, delegate: CustomSearchFilmDelegate());
-                },
+                press: () => context.go(RoutesName.SEARCH)
               ),
             ],
           ),

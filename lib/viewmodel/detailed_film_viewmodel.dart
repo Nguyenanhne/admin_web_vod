@@ -401,20 +401,30 @@ class DetailedFilmViewModel extends ChangeNotifier{
     try {
       final response = await http.post(
         Uri.parse(CHECK_TRAILER_R2),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"id": _film!.id}),
+        headers: {"film-id": _film!.id},
       );
       if (response.statusCode == 200) {
-        print("Đã tồn tại trailer");
-        return true;
-      } else {
-        print ("Không tồn tại trailer: ${response.body}");
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        if (data['trailerUrl'] != null) {
+          print("Trailer đã tồn tại");
+          return true;
+        } else {
+          print("Trailer không tồn tại");
+          return false;
+        }
+      } else if (response.statusCode == 400) {
+        print ("Thiếu id ${response.body}");
+        return false;
+      }
+      else  if (response.statusCode == 500) {
+        print ("Lỗi server ${response.body}");
         return false;
       }
     } catch (e) {
-      print ("❌ Lỗi lấy trailer: ");
+      print ("Lỗi lấy trailer: ");
       return false;
     }
+    return false;
   }
 
   Future<bool> checkVideoR2() async{
@@ -424,16 +434,27 @@ class DetailedFilmViewModel extends ChangeNotifier{
         headers: {"film-id" : _film!.id},
       );
       if (response.statusCode == 200) {
-        print("Đã tồn tại video");
-        return true;
-      } else {
-        print ("Không tồn tại video: ${response.body}");
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        if (data['videoUrl'] != null) {
+          print("Video đã tồn tại");
+          return true;
+        } else {
+          print("Video không tồn tại");
+          return false;
+        }
+      } else if (response.statusCode == 400) {
+        print ("Thiếu id ${response.body}");
+        return false;
+      }
+      else  if (response.statusCode == 500) {
+        print ("Lỗi server ${response.body}");
         return false;
       }
     } catch (e) {
       print ("❌ Lỗi lấy video: ");
       return false;
     }
+    return false;
   }
 
   Future<void> uploadTrailerOnTap(BuildContext context) async {

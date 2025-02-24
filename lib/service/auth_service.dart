@@ -56,7 +56,7 @@ class Auth {
       // Lấy Firebase ID Token
       User? user = FirebaseAuth.instance.currentUser;
       String? idToken = await user?.getIdToken();
-      print(idToken);
+      print("Đang gửi xác thực");
       if (idToken == null) {
         print("Không có token để gửi");
         return false;

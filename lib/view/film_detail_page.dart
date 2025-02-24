@@ -124,19 +124,19 @@ class _DetailedFilmPageState extends State<DetailedFilmPage> {
                               // ),
                               Row(
                                 children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(16.0),
-                                    child: Consumer<DetailedFilmViewModel>(
-                                      builder: (context, detailedFilmVM, child) {
-                                        return Text(
-                                          "CHI TIẾT PHIM: ${detailedFilmVM.film!.upperName}",
-                                          style: titleStyle,
-                                        );
-                                      },
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Consumer<DetailedFilmViewModel>(
+                                        builder: (context, detailedFilmVM, child) {
+                                          return Text(
+                                            "CHI TIẾT PHIM: ${detailedFilmVM.film!.upperName}",
+                                            style: titleStyle,
+                                          );
+                                        },
+                                      ),
                                     ),
                                   ),
-                                  Expanded(child: SizedBox()),
-
                                   // Nút Menu chứa tất cả các hành động
                                   Consumer<DetailedFilmViewModel>(
                                     builder: (context, detailedFilmVM, child) {
@@ -364,12 +364,6 @@ class _DetailedFilmPageState extends State<DetailedFilmPage> {
                                       ),
                                     ],
                                   )
-                              ),
-                              TextButton(
-                                  onPressed: (){
-                                    detailedFilmVM.ping(context);
-                                  },
-                                  child: Text("Ping to server")
                               ),
                             ],
                           ),

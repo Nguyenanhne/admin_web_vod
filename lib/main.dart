@@ -7,6 +7,7 @@ import 'package:admin/view/ffmpeg.dart';
 import 'package:admin/view/film_detail_page.dart';
 import 'package:admin/view/header.dart';
 import 'package:admin/view/menu_film_page.dart';
+import 'package:admin/view/search_page.dart';
 import 'package:admin/view/sign_in_page.dart';
 import 'package:admin/view/user_management_page.dart';
 import 'package:admin/viewmodel/add_new_film_viewmodel.dart';
@@ -118,6 +119,10 @@ class MyApp extends StatelessWidget {
             GoRoute(
               path: RoutesName.USER,
               builder: (context, state) => UserManagementPage(),
+            ),
+            GoRoute(
+              path: RoutesName.SEARCH,
+              builder: (context, state) => SearchPage(),
             ),
             GoRoute(
               path: RoutesName.MENU_FILM,
