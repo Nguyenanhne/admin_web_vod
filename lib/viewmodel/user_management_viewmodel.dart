@@ -16,11 +16,25 @@ class UserManagementViewModel extends ChangeNotifier{
   List<UserModel> _users = [];
   DocumentSnapshot? _lastDocument;
   bool _isLoading = false;
+  bool _hasMore = true;
 
   List<UserModel> get users => _users;
   bool get isLoading => _isLoading;
   DocumentSnapshot? get lastDocument => _lastDocument;
 
+  ScrollController scrollController = ScrollController();
+
+
+  UserManagementViewModel(){
+    scrollController.addListener((){
+      onScroll();
+    });
+  }
+  void onScroll(){
+    if (scrollController.position.pixels == scrollController.position.maxScrollExtent && !isLoading && _hasMore) {
+      fetchMoreUsers();
+    }
+  }
   Future<void> fetchUsers() async {
     reset();
     try {
@@ -30,10 +44,40 @@ class UserManagementViewModel extends ChangeNotifier{
       );
       _users.addAll(result['users']);
       _lastDocument = result['lastDocument'];
+      _hasMore = _users.length == _limit;
+
     } catch (e) {
       print('Error fetching users: $e');
     }
   }
+  Future<void> fetchMoreUsers() async{
+    if (_isLoading || !_hasMore) return;
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final result = await userService.fetchListUser(
+        limit: _limit,
+        lastDocument: _lastDocument,
+      );
+      final List<UserModel> users = result['users'] as List<UserModel>;
+      final DocumentSnapshot? lastDocument = result['lastDocument'] as DocumentSnapshot?;
+      if (users.isNotEmpty) {
+        _users.addAll(users);
+
+        _lastDocument = lastDocument;
+
+        _hasMore = users.length == _limit;
+      } else {
+        _hasMore = false;
+      }
+    } catch (e) {
+      print('Error fetching users: $e');
+    }finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   Future<bool> unBlock(String uid) async{
     final url = Uri.parse(UNBLOCK);
     User? user = FirebaseAuth.instance.currentUser;
@@ -67,22 +111,7 @@ class UserManagementViewModel extends ChangeNotifier{
       return false;
     }
   }
-  Future<void> unBlockOnTap(String uid, int index, BuildContext context) async{
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
-    print("unBlock OnTap");
-    bool isActivated = await unBlock(uid);
-    if (isActivated){
-      users[index].isActivated = true;
-      notifyListeners();
-    }
-    if(context.mounted){
-      context.pop();
-    }
-  }
+
   Future<bool> block(String uid) async {
     final url = Uri.parse(BLOCK);
     User? user = FirebaseAuth.instance.currentUser;
@@ -117,24 +146,43 @@ class UserManagementViewModel extends ChangeNotifier{
     }
   }
 
+  Future<void> unBlockOnTap(String uid, int index, BuildContext context) async{
+    showDialog(
+      context: context,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+    bool isActivated = await unBlock(uid);
+    if (isActivated){
+      print("setState");
+      users[index].isActivated = true;
+      notifyListeners();
+    }
+    if(context.mounted){
+      print("pop");
+      context.pop();
+    }
+  }
+
   Future<void> blockOnTap(String uid, int index, BuildContext context) async{
     showDialog(
       context: context,
-      barrierDismissible: false,
       builder: (context) => const Center(child: CircularProgressIndicator()),
     );
-    print("block OnTap");
     bool isActivated = await block(uid);
     if (isActivated){
+      print("setState");
       users[index].isActivated = false;
       notifyListeners();
     }
     if(context.mounted){
+      print("pop");
       context.pop();
     }
   }
+
   void reset(){
     _users.clear();
     _lastDocument = null;
   }
+
 }

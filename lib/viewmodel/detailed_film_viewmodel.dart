@@ -325,14 +325,14 @@ class DetailedFilmViewModel extends ChangeNotifier{
         body: jsonEncode({"id": _film!.id}),
       );
       if (response.statusCode == 200) {
-        print("✅ Tải trailer lên thành công!");
+        print("Tải trailer lên thành công!");
         return true;
       } else {
-        print ("❌ Lỗi tải lên: ${response.body}");
+        print (" Lỗi tải lên: ${response.body}");
         return false;
       }
     } catch (e) {
-      print ("❌ Lỗi tải lên: ");
+      print (" Lỗi tải lên: ");
       return false;
     }
   }
@@ -345,14 +345,14 @@ class DetailedFilmViewModel extends ChangeNotifier{
         body: jsonEncode({"id": _film!.id}),
       );
       if (response.statusCode == 200) {
-        print("✅ Tải video lên thành công!");
+        print("Tải video lên thành công!");
         return true;
       } else {
-        print ("❌ Lỗi tải lên: ${response.body}");
+        print (" Lỗi tải lên: ${response.body}");
         return false;
       }
     } catch (e) {
-      print ("❌ Lỗi tải lên: ");
+      print ("Lỗi tải lên: ");
       return false;
     }
   }
@@ -372,7 +372,7 @@ class DetailedFilmViewModel extends ChangeNotifier{
         return false;
       }
     } catch (e) {
-      print ("❌ Lỗi tải lên: ");
+      print ("❌ Lỗi tải lên: $e");
       return false;
     }
   }
@@ -406,10 +406,10 @@ class DetailedFilmViewModel extends ChangeNotifier{
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
         if (data['trailerUrl'] != null) {
-          print("Trailer đã tồn tại");
+          print("Trailer đã tồn tại trong R2");
           return true;
         } else {
-          print("Trailer không tồn tại");
+          print("Chưa tồn tại trailer trong R2");
           return false;
         }
       } else if (response.statusCode == 400) {
@@ -436,10 +436,10 @@ class DetailedFilmViewModel extends ChangeNotifier{
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
         if (data['videoUrl'] != null) {
-          print("Video đã tồn tại");
+          print("Video đã tồn tại trong R2");
           return true;
         } else {
-          print("Video không tồn tại");
+          print("Video không tồn tại trong R2");
           return false;
         }
       } else if (response.statusCode == 400) {
@@ -457,6 +457,34 @@ class DetailedFilmViewModel extends ChangeNotifier{
     return false;
   }
 
+  Future<bool> deleteFolderR2(String path) async {
+    Uri uri = Uri.parse(DELETE_VIDEO);
+    try {
+
+      final response = await http.delete(
+        uri,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(
+          {
+            "folderPath" : path
+          }
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print(" Success: ${data['message']}");
+        return true;
+      } else {
+        print("Error: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print("Exception: $e");
+      return false;
+    }
+  }
+
   Future<void> uploadTrailerOnTap(BuildContext context) async {
     showDialog(
       context: context,
@@ -464,16 +492,17 @@ class DetailedFilmViewModel extends ChangeNotifier{
       builder: (context) => const Center(child: CircularProgressIndicator()),
     );
     bool next = false;
-    bool isAlready = false;
+
+    bool isTrailerUpdated = false;
 
     //Kiểm tra đã upload chưa?
-    isAlready = await checkTrailerR2();
+    isTrailerUpdated = await checkTrailerR2();
 
     if(context.mounted){
       context.pop();
     }
 
-    if(isAlready){
+    if(isTrailerUpdated){
       if(context.mounted){
         next = await showDialog<bool>(context: context, builder: (context) {
           return AlertDialog(
@@ -539,14 +568,17 @@ class DetailedFilmViewModel extends ChangeNotifier{
 
     notifyListeners();
 
-    bool isTrailerUpdated = false;
-    isAlready = false;
+    bool isAlready = false;
+    bool isDeleted = false;
 
     if (_film != null) {
       isAlready = await checkTrailerUpload();
     }
-
+  
     if (isAlready){
+      if(isTrailerUpdated){
+        isDeleted = await deleteFolderR2("trailer/${_film!.id}");
+      }
       isTrailerUpdated = await uploadTrailer();
       if (isTrailerUpdated) {
         print("Upload trailer thành công!");
@@ -633,21 +665,22 @@ class DetailedFilmViewModel extends ChangeNotifier{
       builder: (context) => const Center(child: CircularProgressIndicator()),
     );
     bool next = false;
-    bool isAlready = false;
+    bool isVideoUpdated = false;
+
     //Kiểm tra đã upload chưa?
-    isAlready = await checkVideoR2();
+    isVideoUpdated = await checkVideoR2();
 
     if(context.mounted){
       context.pop();
     }
 
-    if(isAlready){
+    if(isVideoUpdated){
       if(context.mounted){
         next = await showDialog<bool>(context: context, builder: (context) {
           return AlertDialog(
             title: Text("Cảnh báo",
               style: dialogTitleStyle.copyWith(color: Colors.yellow),),
-            content: Text("Đã tồn tại trailer, bạn có muốn thay thế?", style: dialogContentStyle,),
+            content: Text("Đã tồn tại video, bạn có muốn thay thế?", style: dialogContentStyle,),
             actions: [
               TextButton(onPressed: () {
                 context.pop(true);
@@ -708,8 +741,8 @@ class DetailedFilmViewModel extends ChangeNotifier{
     _isEdited = false;
     notifyListeners();
 
-    bool isVideoUpdated = false;
-    isAlready = false;
+    bool isAlready = false;
+    bool isDeleted = false;
 
     if (_film != null) {
       //Kiểm tra source
@@ -717,9 +750,12 @@ class DetailedFilmViewModel extends ChangeNotifier{
     }
 
     if (isAlready){
+      if(isVideoUpdated){
+        isDeleted = await deleteFolderR2("video/${_film!.id}");
+      }
       isVideoUpdated = await uploadVideo();
       if (isVideoUpdated) {
-        print("Upload trailer thành công!");
+        print("Upload video thành công!");
         _isEdited = false; // Hoàn tất chỉnh sửa nếu có ít nhất 1 thành công
         if (context.mounted) {
           showDialog(context: context, builder: (context) {

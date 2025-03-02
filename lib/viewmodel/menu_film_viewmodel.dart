@@ -68,9 +68,10 @@ class MenuFilmViewModel extends ChangeNotifier{
 
         _lastDocument = lastDocument;
 
-        if (films.length < limit) {
-          _hasMore = false;
-        }
+        _hasMore = films.length == _limit;
+        // if (films.length < limit) {
+        //   _hasMore = false;
+        // }
       } else {
         _hasMore = false;
       }

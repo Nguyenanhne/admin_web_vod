@@ -22,7 +22,6 @@ class UserService{
       List<UserModel> users = snapshot.docs.map((doc) {
         return UserModel.fromMap(doc.data()! as Map<String, dynamic>, doc.id);
       }).toList();
-      print(users.length);
       return {
         'users': users,
         'lastDocument': snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
@@ -32,6 +31,7 @@ class UserService{
       return {};
     }
   }
+
   Future<List<UserModel>> searchUserByEmail(String nameQuery) async {
     try {
       QuerySnapshot querySnapshot = await firestore.collection('User')
@@ -49,6 +49,5 @@ class UserService{
       return [];
     }
   }
-
 
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -68,7 +69,6 @@ class FfmpegViewModel extends ChangeNotifier {
   }
 
   Future<void> uploadToServerOnTap(BuildContext context) async {
-
      if(!_isVideo && !_isTrailer){
        showDialog(context: context, builder: (context){
          return AlertDialog(
@@ -106,46 +106,71 @@ class FfmpegViewModel extends ChangeNotifier {
            ],
          );
        });
+
        return;
      }
-
+    
     _isProcess = true;
     notifyListeners();
 
+    bool clear = false;
     bool upload = false;
     bool hlsProcess = false;
+    
+    clear = await clearUploadFolder();
+    if (!clear){
+      if(context.mounted){
+        showDialog(context: context, builder: (context){
+          return AlertDialog(
+            title: Text("Lỗi xóa video cũ ", style: dialogTitleStyle.copyWith(color: Colors.red),),
+            content: Text("Lỗi xóa video cũ, thử lại sau!", style: dialogContentStyle,),
+            actions: [
+              TextButton(onPressed: () { context.pop(); },
+                  child: Text("Xác nhận", style: dialogContentStyle))
+            ],
+          );
+        });
+      }
+      _isProcess = false;
+      notifyListeners();
+      return;
+    }
 
     upload  = await uploadFileInChunks(_selectedFiles!);
     if (upload){
       print("Upload phim thành công");
       hlsProcess = await processHLS("video.mp4");
     } else{
-      showDialog(context: context, builder: (context){
-        return AlertDialog(
-          title: Text("Lỗi upload phim", style: dialogTitleStyle.copyWith(color: Colors.red),),
-          content: Text("Đã có lỗi, vui lòng thử lại!", style: dialogContentStyle,),
-          actions: [
-            TextButton(onPressed: () { context.pop(); },
-                child: Text("Xác nhận", style: dialogContentStyle))
-          ],
-        );
-      });
+      if(context.mounted){
+        showDialog(context: context, builder: (context){
+          return AlertDialog(
+            title: Text("Lỗi upload phim", style: dialogTitleStyle.copyWith(color: Colors.red),),
+            content: Text("Đã có lỗi, vui lòng thử lại!", style: dialogContentStyle,),
+            actions: [
+              TextButton(onPressed: () { context.pop(); },
+                  child: Text("Xác nhận", style: dialogContentStyle))
+            ],
+          );
+        });
+      }
       _isProcess = false;
       notifyListeners();
       return;
     }
     if(hlsProcess){
       print("Cắt phim thành công");
-      showDialog(context: context, builder: (context){
-        return AlertDialog(
-          title: Text("Thành công", style: dialogTitleStyle.copyWith(color: Colors.green),),
-          content: Text("Đã xử lý video thành công!", style: dialogContentStyle,),
-          actions: [
-            TextButton(onPressed: () { context.pop(); },
-                child: Text("Xác nhận", style: dialogContentStyle))
-          ],
-        );
-      });
+      if(context.mounted){
+        showDialog(context: context, builder: (context){
+          return AlertDialog(
+            title: Text("Thành công", style: dialogTitleStyle.copyWith(color: Colors.green),),
+            content: Text("Đã xử lý video thành công!", style: dialogContentStyle,),
+            actions: [
+              TextButton(onPressed: () { context.pop(); },
+                  child: Text("Xác nhận", style: dialogContentStyle))
+            ],
+          );
+        });
+      }
     }
     _isProcess = false;
     reset();
@@ -164,6 +189,27 @@ class FfmpegViewModel extends ChangeNotifier {
         notifyListeners(); // Cập nhật UI
       }
     });
+  }
+
+  Future<bool> clearUploadFolder() async {
+    Uri uri = _isTrailer
+        ? Uri.parse(CLEAR_UPLOAD_TRAILER)
+        : Uri.parse(CLEAR_UPLOAD_VIDEO);    try {
+
+      final response = await http.delete(uri);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print(" Success: ${data['message']}");
+        return true;
+      } else {
+        print("Error: ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print("Exception: $e");
+      return false;
+    }
   }
 
   Future<bool> uploadFileInChunks(html.File file) async {
@@ -224,40 +270,9 @@ class FfmpegViewModel extends ChangeNotifier {
       return false;
     }
   }
-  // Future<bool> uploadFile() async {
-  //   if (_selectedFiles == null) {
-  //     print("Chưa chọn file!");
-  //     return false;
-  //   }
-  //
-  //   Uri uri = _isTrailer
-  //       ? Uri.parse(UPLOAD_TRAILER_TO_SERVER)
-  //       : Uri.parse(UPLOAD_VIDEO_TO_SERVER);
-  //
-  //   final formData = html.FormData();
-  //   formData.appendBlob('file', _selectedFiles!, "video.mp4");
-  //
-  //   final request = html.HttpRequest();
-  //   final completer = Completer<bool>();
-  //
-  //   request.open('POST', uri.toString(), async: true);
-  //   request.send(formData);
-  //
-  //   request.onLoadEnd.listen((event) {
-  //     if (request.status == 200) {
-  //       print("Upload phim thành công!");
-  //       completer.complete(true);
-  //     } else {
-  //       print("Lỗi khi upload phim : ${request.status} - ${request.responseText}");
-  //       completer.complete(false);
-  //     }
-  //   });
-  //   return completer.future;
-  // }
-  //
+
   Future<bool> processHLS(String fileName) async{
-     print("Tiến hành cắt phim");
-    var uri = null;
+    Uri uri;
     if(_isTrailer){
       uri = Uri.parse(CUT_TRAILER_HLS);
     }else{

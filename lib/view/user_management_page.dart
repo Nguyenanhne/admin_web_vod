@@ -25,8 +25,10 @@ class _UserManagementPageState extends State<UserManagementPage> {
   }
   @override
   Widget build(BuildContext context) {
+    final userVM = Provider.of<UserManagementViewModel>(context, listen: false);
     return Scaffold(
       body: CustomScrollView(
+        controller: userVM.scrollController,
         slivers: [
           SliverAppBar(
             title: Text("Danh sách người dùng", style: contentStyle.copyWith(fontWeight: FontWeight.bold, fontSize: 18),),
@@ -65,8 +67,14 @@ class _UserManagementPageState extends State<UserManagementPage> {
                     return SliverToBoxAdapter(child: Center(child: Text("Không có người dùng nào", style: contentStyle)));
                   }
                   return SliverList.separated(
-                    itemCount: userVM.users.length,
+                    itemCount: userVM.users.length + (userVM.isLoading ? 1 : 0),
                     itemBuilder: (context, index){
+                      if (index == userVM.users.length) {
+                        return Align(
+                          alignment: Alignment.center,
+                          child: CircularProgressIndicator(),
+                        );
+                      }
                       final email = userVM.users[index].email;
                       final name = userVM.users[index].name;
                       final isActivated = userVM.users[index].isActivated;
@@ -74,7 +82,7 @@ class _UserManagementPageState extends State<UserManagementPage> {
                       return userItem(contentStyle: contentStyle, uid: uid, email: email, name: name, isActivated: isActivated, index: index);
                     },
                     separatorBuilder: (context, index){
-                      return SizedBox(height: 10);
+                      return SizedBox(height: 50);
                     }
                   );
                 }
